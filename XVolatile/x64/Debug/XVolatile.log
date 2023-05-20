@@ -1,2 +1,3 @@
 ﻿  XVolatile.cpp
+C:\Projects\VisualStudioPrograms\Graphics\OpenGL\Source\XVolatile\XVolatile.cpp(44,39): warning C4267: '=': conversion from 'size_t' to 'GLint', possible loss of data
   XVolatile.vcxproj -> C:\Projects\VisualStudioPrograms\Graphics\OpenGL\Source\XVolatile\x64\Debug\XVolatile.exe

@@ -1,17 +1,169 @@
-// XVolatile.cpp : This file contains the 'main' function. Program execution begins and ends there.
+// XVolatile.cpp : This file contains the 'main' function. Program execution begins and ends here.
 //
 
 
 #include <stdio.h>
+#include <string.h>
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 
 const GLint WIDTH = 800;
 const GLint HEIGHT = 600;
 
+//Each object we draw will need to have it's own VAO, VBO and Shaders
+GLuint VertexArrayObject, VertexBufferObject, ShaderProgram;
+
+static const char* VertexShader = "                                 \n\
+#version 330                                                        \n\
+                                                                    \n\
+layout (location = 0) in vec3 pos;                                 \n\
+                                                                    \n\
+void main()                                                         \n\
+{                                                                   \n\
+    gl_Position = vec4(pos.x, pos.y, pos.z, 1.0);                   \n\
+}";
+
+static const char* PixelShader = "                                  \n\
+#version 330                                                        \n\
+                                                                    \n\
+out vec4 color;                                                     \n\
+                                                                    \n\
+void main()                                                         \n\
+{                                                                   \n\
+    color = vec4(1.0, 0.0, 0.0, 1.0);                               \n\
+}";
+
+void CreateShader(GLuint ShaderProgram, const char* ShaderCode, GLenum ShaderType)
+{
+    GLuint Shader = glCreateShader(ShaderType);
+
+    const GLchar* Code[1];
+    Code[0] = ShaderCode;
+
+    GLint CodeLength[1];
+    CodeLength[0] = strlen(ShaderCode);
+
+    glShaderSource(Shader, 1, Code, CodeLength);
+    glCompileShader(Shader);
+
+    //Verify Compilation
+    GLint Result = 0;
+    GLchar Logs[1024] = { 0 };
+
+    glGetShaderiv(Shader, GL_COMPILE_STATUS, &Result);
+    if (!Result)
+    {
+        glGetShaderInfoLog(Shader, sizeof(Logs), NULL, Logs);
+        printf("Shader Compilation FAILED! \n Log Info: \n %s", Logs);
+        return;
+    }
+
+    /*
+    const bool Success = ShaderErrorHandler(ShaderProgram, GL_COMPILE_STATUS, Result, Logs);
+
+    if (!Success) {
+        return;
+    }
+    */
+
+    //If compiled sucessfully, the shader still has to be attached to the OpenGL context
+    glAttachShader(ShaderProgram, Shader);
+
+    //glDetachShader(ShaderProgram, Shader);
+}
+
+/*
+bool ShaderErrorHandler(GLuint ShaderProgram, GLenum StatusType, GLint &Result, GLchar* Log)
+{
+    const bool Compiling = StatusType == GL_COMPILE_STATUS;
+    const GLubyte* TestType = gluGetString(StatusType);
+
+    glLinkProgram(ShaderProgram);
+    glGetProgramiv(ShaderProgram, StatusType, &Result);
+    if (!Result)
+    {
+        Compiling ? 
+            glGetProgramInfoLog(ShaderProgram, sizeof(Log), NULL, Log) 
+            : 
+            glGetShaderInfoLog(ShaderProgram, sizeof(Log), NULL, Log)
+        ;
+        printf("Shader creation of %s type FAILED! \n Log Info: \n %s", TestType, Log);
+        return false;
+    }
+    else {
+        return true;
+    }
+}
+*/
+
+void CompileShaders()
+{
+    ShaderProgram = glCreateProgram();
+
+    if (!ShaderProgram) {
+        printf("Shader program creation FAILED!");
+        return;
+    }
+
+    CreateShader(ShaderProgram, VertexShader, GL_VERTEX_SHADER);
+    CreateShader(ShaderProgram, PixelShader, GL_FRAGMENT_SHADER);
+
+    //todo Debugging - - - - - - - - - - - - - - - - - - - - - - - - 
+
+    GLint Result = 0;
+    GLchar Logs[1024] = { 0 };
+
+    // Verify Shaders are Linked
+    //ShaderErrorHandler(ShaderProgram, GL_LINK_STATUS, Result, Logs);
+    
+    glLinkProgram(ShaderProgram);
+    glGetProgramiv(ShaderProgram, GL_LINK_STATUS, &Result);
+    if (!Result)
+    {
+        glGetProgramInfoLog(ShaderProgram, sizeof(Logs), NULL, Logs);
+        printf("Shader Linking FAILED! \n Log Info: \n %s", Logs);
+        return;
+    }
+    /**/
+    // Verify Shaders are Validated
+    //ShaderErrorHandler(ShaderProgram, GL_VALIDATE_STATUS, Result, Logs);
+    
+    glValidateProgram(ShaderProgram);
+    glGetProgramiv(ShaderProgram, GL_VALIDATE_STATUS, &Result);
+    if (!Result)
+    {
+        glGetProgramInfoLog(ShaderProgram, sizeof(Logs), NULL, Logs);
+        printf("Shader Validation FAILED! \n Log Info: \n %s", Logs);
+        return;
+    }
+    /**/
+}
+
+void CreateTriangle()
+{
+    GLfloat Vertices[] = {
+        -1.0f, -1.0f, 0.0f,
+        1.0f, -1.0f, 0.0f,
+        0.0f, 1.0f, 0.0f
+    };
+
+    glGenVertexArrays(1, &VertexArrayObject);
+    glBindVertexArray(VertexArrayObject);
+
+    glGenBuffers(1, &VertexBufferObject);
+    glBindBuffer(GL_ARRAY_BUFFER, VertexBufferObject);
+
+    glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * 9, Vertices, GL_STATIC_DRAW);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
+    glEnableVertexAttribArray(0);
+
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glBindVertexArray(0);
+}
+
 int main()
 {
-    //Initialise GLFW and verify it
+    //todo Initialise GLFW and verify it
     if (!glfwInit())
     {
         printf("Initialisation Error!");
@@ -56,6 +208,10 @@ int main()
     //todo Setup viewport Size
     glViewport(0, 0, BufferWidth, BufferHeight);
 
+    //Initialize Scene rendering
+    CreateTriangle();
+    CompileShaders();
+
     //todo Main Loop
     //Looping as long as the window is open
     while (!glfwWindowShouldClose(MainWindow))
@@ -67,7 +223,18 @@ int main()
         glClearColor(0.0f, 0.0f, 1.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
 
-        //Replace the previous frame's scene and render the updated scene 
+        //Run the Shader program
+        glUseProgram(ShaderProgram);
+
+            glBindVertexArray(VertexArrayObject);
+
+                glDrawArrays(GL_TRIANGLES, 0, 3);
+
+            glBindVertexArray(0);
+
+        glUseProgram(0);
+
+        //Replace the previous frame's scene and render the updated scene | RENDER CYCLE END
         glfwSwapBuffers(MainWindow);
     }
 
@@ -77,10 +244,3 @@ int main()
 // Run program: Ctrl + F5 or Debug > Start Without Debugging menu
 // Debug program: F5 or Debug > Start Debugging menu
 
-// Tips for Getting Started: 
-//   1. Use the Solution Explorer window to add/manage files
-//   2. Use the Team Explorer window to connect to source control
-//   3. Use the Output window to see build output and other messages
-//   4. Use the Error List window to view errors
-//   5. Go to Project > Add New Item to create new code files, or Project > Add Existing Item to add existing code files to the project
-//   6. In the future, to open this project again, go to File > Open > Project and select the .sln file
