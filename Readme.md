@@ -178,7 +178,7 @@ In this following example, we will complete a full render cycle, drawing a trian
 
 This setup would consist of all mandatory Rendering Stages discussed earlier.
 
-#### I) Vertex Specification
+#### I) Vertex Specification Setup
 
 ###### 1. Define the shape to render
 
@@ -281,7 +281,7 @@ Here is what such array might look like:
 
 The `glVertexAttribPointer()` function takes in many different parameters, and it is important to understand what each and every one of them means, and what is it used for:
 
-- `Index`: The address location. This address number needs to also be referenced in the shader later on | (`0`)
+- `Index`: The address location. This is the index of the vertex attribute in the vertex shader. It corresponds to the layout location specified in the vertex shader code using the layout(location = index) syntax. If this was a multiple Shaders setup, this value would increment | (`0`)
 - `Size`: Specifies the number of components per vertex attribute. The number of adjacent members in the index to consider a singular structure | (`3`)
 - `Type`: This parameter indicates the data type of each component in the attribute | (`GL_FLOAT`)
 - `Normalized`: Toggle whether the vertex attribute values should be normalized or not | (`GL_FALSE`)
@@ -385,4 +385,326 @@ void CreateTriangle()
 }
 ```
 
-#### II) Vertex Shader
+#### II) Shading & Rendering Process
+
+Shaders are executable programs or code files, which can use and manipulate data on the GPU.
+These programs are very similar to C/C++ syntax - having a `main` function in which most calculations take place.
+This is the main entry point into the shader program.
+
+Shaders are commonly stored as `const char*` variables.
+Shader code has many syntactic and operational nuances, which may vary based on the Shader Type.
+The common thing about all shader types, is that they initially must declare which version of `GLSL` should be used, using the `#version ...` preprocessor directive.
+This version of `GLSL` should match the `MAJOR+MINOR` `OpenGL` version as defined in the application code.
+
+In this section, we will cover each step necessary in order to link and execute and render a Shader Program.
+
+---
+
+###### Vertex Shader Basics
+
+The Vertex Shader has 3 main important requirements to consider:
+
+1. The `#version` set, indicating which version of GLSL should be used
+2. The `layout` declaration - this `location` corresponds to the address of the shader as given in `glVertexAttribPointer(0, ...);` and `glEnableVertexAttribArray(0);`
+3. The `main()` function - The minimum mandatory contents for the main function in the Vertex Shader must consist of the `gl_Position` variable being set with a `vec4`
+   - This position variable is being set with the position data coming from the layout input `vec3` variable, `pos` (can be named anything)
+
+```cpp
+static const char* VertexShader = "            \n\
+#version 330                                   \n\
+                                               \n\
+layout (location = 0) in vec3 pos;             \n\
+                                               \n\
+void main()                                    \n\
+{                                              \n\
+  gl_Position = vec4(pos.x, pos.y, pos.z, 1.0);\n\
+}";
+
+```
+
+Using the vertex shader, we can define and manipulate the position of the vertices.
+
+###### Fragment Shader Basics
+
+The Pixel Shader has 3 main important requirements to consider:
+
+1. The `#version` set, indicating which version of GLSL should be used
+2. The `out` variable declaration - this output must be a `vec4`, which would always represent the color (variable can be named anything)
+3. The `main()` function - this is where the color of the vertices can be defined
+
+```cpp
+static const char* PixelShader = "     \n\
+#version 330                           \n\
+                                       \n\
+out vec4 color;                        \n\
+                                       \n\
+void main()                            \n\
+{                                      \n\
+   color = vec4(1.0, 0.0, 0.0, 1.0);   \n\
+}";
+
+```
+
+Using the pixel shader, we can define and manipulate the colors and graphical properties of each vertex.
+
+###### Error Handling Concerns
+
+Debugging errors coming from the GPU can be very tricky - and for this reason we should provide error checking
+early on, to prevent evasive bugs and errors.
+
+The `glGetShaderiv()` and `glGetProgramiv()` functions are used to retrieve information about shader objects and shader programs, respectively, in OpenGL.
+
+The `glGetShaderiv()` function retrieves information about a specific shader object. It takes the following parameters:
+
+- `shader`: The handle to the shader object you want to query.
+- `pname`: The parameter name, indicating the type of information you want to retrieve.
+- `params`: A pointer to a variable or array where the retrieved information will be stored.
+
+The glGetProgramiv() function retrieves information about a specific shader program. It takes the following parameters:
+
+- `program`: The handle to the shader program you want to query.
+- `pname`: The parameter name, indicating the type of information you want to retrieve.
+- `params`: A pointer to a variable or array where the retrieved information will be stored.
+
+Both functions work in a similar way. They retrieve various types of information based on the `pname` parameter, such as compilation status, linking status, validation status, log length, etc. The retrieved information is then stored in the params variable or array.
+
+To use these functions, you need to pass the appropriate `pname` value to specify the type of information you want to retrieve. For example, to check the compilation status of a shader object, you would set `pname` to `GL_COMPILE_STATUS`. The params variable should be of the appropriate type to receive the retrieved information.
+
+For these checks, we will need to create a `GLint` variable, to store the result status of the `Get` attempt.
+
+```cpp
+GLint result = 0;
+...
+glGetShaderiv(Shader, GL_COMPILE_STATUS, &result);
+if (result){
+   // shader compiled successfully
+}
+else{
+   // error: compilation failed
+}
+```
+
+At this point, if `result` is null, then we know that the data we were trying to access is not valid.
+If the data is indeed invalid, then we might want to call `glGetShaderInfoLog()` or `glGetProgramInfoLog()` to retrieve logs in such cases.
+For this, we will need to create a `GLchar` variable, pass it to the info getter, and store the logs in it so it could be printed.
+
+```cpp
+GLint result = 0;
+GLchar Logs[1024] = { 0 };
+...
+glGetShaderiv(Shader, GL_COMPILE_STATUS, &result);
+    if (!result)
+    {
+      glGetShaderInfoLog(Shader, sizeof(Logs), NULL, Logs);
+      printf("Shader Compilation FAILED! \n Log Info: \n %s", Logs);
+    }
+```
+
+Having to log for errors everywhere can get messy and bloated, so instead of having to write an error handling operation for each Shader and Shader program in each part of the compilation process - we can simply create a generic error handling function, that handles errors for Shaders and Shader Programs.
+
+```cpp
+bool VerifyIsValid(GLuint ShaderOrProgram, GLenum StatusType)
+{
+    const bool Compiling = StatusType == GL_COMPILE_STATUS;
+    static GLchar Log[1024] = { 0 };
+    GLint Result = 0;
+
+    Compiling ?
+        glGetShaderiv(ShaderOrProgram, StatusType, &Result)
+        :
+        glGetProgramiv(ShaderOrProgram, StatusType, &Result)
+        ;
+    if (!Result)
+    {
+        Compiling ?
+            glGetShaderInfoLog(ShaderOrProgram, sizeof(Log), NULL, Log)
+            :
+            glGetProgramInfoLog(ShaderOrProgram, sizeof(Log), NULL, Log)
+            ;
+        printf("Shader creation of %d type FAILED! \n Log Info: \n %s", StatusType, Log);
+        return false;
+    }
+    else {
+        return true;
+    }
+}
+```
+
+This function can then be used later for all the checks we will need, and even for getting a success bool so we'll know if to continue or break execution based on it's returned result.
+
+###### Executing Shader Programs
+
+A shader program goes through several steps from it's creation until it's use in rendering.
+Also, this process would involve several functions, and may span across multiple code files.
+
+First, we will need to define a function that can handle the creation of a shader.
+
+- This function would initialize a `GLuint` variable via the `glCreateShader()` function, provided with a `GLenum` that specifies the shader type to be created
+- The shader code should be passed to a `const GLchar*` null-terminated array. This prevents having to copy the string, and saves up on memory
+- Extract the length of the shader code string (optional if using a null-terminated char array)
+
+```cpp
+void CreateShader(GLuint ShaderProgram, const char* ShaderCode, GLenum ShaderType)
+{
+   GLuint Shader = glCreateShader(ShaderType);
+
+   const GLchar* Code[1];
+   Code[0] = ShaderCode;
+
+   GLint CodeLength[1];
+   CodeLength[0] = strlen(ShaderCode);
+}
+```
+
+With all the necessary data about the shader successfully gathered, we still have 3 more functions to call:
+
+- `glShaderSource()` - Provides the shader source code to the graphics unit
+- `glCompileShader()` - Compile the shader using the graphics processing unit
+- `glAttachShader()` - Attach the compiled Shader to the associated Shader Program
+
+```cpp
+void CreateShader(GLuint ShaderProgram, const char* ShaderCode, GLenum ShaderType)
+{
+   ...
+   glShaderSource(Shader, 1, Code, CodeLength);
+   glCompileShader(Shader);
+   glAttachShader(ShaderProgram, Shader);
+}
+```
+
+The `glShaderSource()` function allows you to provide the shader's source code as a string or an array of strings. Each string represents a line or a portion of the shader code. If you pass an array of strings, they will be concatenated to form the complete shader source.
+
+Typically, you would create a character array or string literal to hold the shader source code, as shown in the above example. The source code is then passed to `glShaderSource()` to set it for the specified shader object.
+
+Once you have set the shader source code using `glShaderSource()`, you still need to compile the shader using `glCompileShader()` to create a compiled shader object. After that, you can finally verify all is well using the error handling function, and attach the shader to a shader program using `glAttachShader()` (and link the program using `glLinkProgram()`, eventually).
+
+```cpp
+void CreateShader(GLuint ShaderProgram, const char* ShaderCode, GLenum ShaderType)
+{
+   GLuint Shader = glCreateShader(ShaderType);
+
+   const GLchar* Code[1];
+   Code[0] = ShaderCode;
+
+   GLint CodeLength[1];
+   CodeLength[0] = strlen(ShaderCode);
+
+   glShaderSource(Shader, 1, Code, CodeLength);
+   glCompileShader(Shader);
+
+   const bool Success = VerifyIsValid(Shader, GL_COMPILE_STATUS);
+   if (Success) glAttachShader(ShaderProgram, Shader);
+}
+```
+
+###### Compiling Shaders
+
+Compiling the shaders mostly consists of the creation of a `Shader Program`, compiling the various shading stages it should involve, and linking that program with the graphics processor.
+This can be broken down to 3 steps:
+
+1. use `glCreateProgram()` to initialize a local/global `GLuint` instance and store it's ID
+2. Use the previously defined `CreateShader()` function to compile each shader type this object should have
+3. Link the Shader Program to the GPU using the `glLinkProgram()` function
+
+```cpp
+void CompileShaders()
+{
+   GLuint ShaderProgram = glCreateProgram();
+
+   if (!ShaderProgram) {
+      printf("Shader program creation FAILED!");
+      return;
+   }
+
+   CreateShader(ShaderProgram, VertexShader, GL_VERTEX_SHADER);
+   CreateShader(ShaderProgram, PixelShader, GL_FRAGMENT_SHADER);
+
+   glLinkProgram(ShaderProgram);
+}
+```
+
+Last thing we may want to do, is to provide error handling for our Shader Program.
+For this, we can use the error handling function we previously created, and perform a check on the `GL_LINK_STATUS`.
+
+Additionally, we can validate the program using `glValidateProgram()`, and perform a check on the `GL_VALIDATE_STATUS`.
+
+```cpp
+void CompileShaders()
+{
+   ShaderProgram = glCreateProgram();
+
+   if (!ShaderProgram) {
+      printf("Shader program creation FAILED!");
+      return;
+   }
+
+   CreateShader(ShaderProgram, VertexShader, GL_VERTEX_SHADER);
+   CreateShader(ShaderProgram, PixelShader, GL_FRAGMENT_SHADER);
+
+   glLinkProgram(ShaderProgram);
+   VerifyIsValid(ShaderProgram, GL_LINK_STATUS);
+
+   glValidateProgram(ShaderProgram);
+   VerifyIsValid(ShaderProgram, GL_VALIDATE_STATUS);
+}
+
+```
+
+###### GPU Rendering
+
+Once all of our shader programs and compilation setup is complete, we can call our `CreateTriangle()` and `CompileShaders()` functions in the main function, just before the main loop starts.
+This will effectively create and register all the vertex data the topology needs, then create the shader program and compile the shaders, initializing our scene rendering.
+
+```cpp
+int main()
+{
+   ...
+
+   //Initialize scene rendering
+   CreateTriangle();
+   CompileShaders();
+
+   //Main loop
+   while (!glfwWindowShouldClose(MainWindow))
+   {...}
+}
+
+```
+
+With the scene initialized, the last thing left to do is to run the Shader Program(s) it contains.
+This is achieved by calling some "drawing" function, such as `glDrawArrays()`, after the shader program starts.
+However before that, we still need to run the program, by calling `glUseProgram()` on our Shader Program.
+
+After that, the 3d mesh / vertex array data which should be applying these shaders needs to be bound, using `glBindVertexArray()`.
+Only then we can draw the render.
+
+Finally, anything that was run and bound needs to be unsubscribed. This simply involves passing `0` to `glBindVertexArray()` and `glDrawArrays()`.
+
+```cpp
+int main()
+{
+   ...
+
+   //Initialize scene rendering
+   CreateTriangle();
+   CompileShaders();
+
+   //Main loop
+   while (!glfwWindowShouldClose(MainWindow))
+   {
+      ...
+
+      glUseProgram(ShaderProgram);
+         glBindVertexArray(VertexArrayObject);
+            glDrawArrays(GL_TRIANGLES, 0, 3);
+         glBindVertexArray(0);
+      glUseProgram(0);
+
+      // RENDER CYCLE END
+      glfwSwapBuffers(MainWindow);
+   }
+}
+
+```
+
+And with that, our render cycle is completed! We have successfully rendered a colored triangle to the screen!
