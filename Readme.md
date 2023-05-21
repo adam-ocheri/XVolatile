@@ -178,7 +178,9 @@ In this following example, we will complete a full render cycle, drawing a trian
 
 This setup would consist of all mandatory Rendering Stages discussed earlier.
 
-#### I) Vertex Specification Setup
+If you'd rather seeing the full code breakdown instead, go to the `Connecting The Pieces` article at the end of the document.
+
+#### Part I) Vertex Specification Setup
 
 ###### 1. Define the shape to render
 
@@ -385,7 +387,7 @@ void CreateTriangle()
 }
 ```
 
-#### II) Shading & Rendering Process
+#### Part II) Shading & Rendering Process
 
 Shaders are executable programs or code files, which can use and manipulate data on the GPU.
 These programs are very similar to C/C++ syntax - having a `main` function in which most calculations take place.
@@ -708,3 +710,576 @@ int main()
 ```
 
 And with that, our render cycle is completed! We have successfully rendered a colored triangle to the screen!
+
+## Connecting The Pieces
+
+This is a technical breakdown of all the components necessary for the minimal setup of a rendering pipeline using OpenGL.
+All code exists within one file, and this breakdown would document each part of it, from top to bottom.
+
+At the end of this breakdown, you can find the full script in it's entirety for further reference.
+
+#### Breakdown
+
+###### 1. Global Variables & Shaders Definition
+
+This initial part involves linking all of the headers the we need to `include`.
+
+Then, we create 2 `GLint` variables to store the initial window size.
+
+We then immediately create 3 `GLuint` objects, that will be used later for the `Vertex Specification` abd `Shading` stages.
+
+Lastly, we define 2 simple shaders (vertex + pixel) within a `const char*` variable type.
+
+```cpp
+#include <stdio.h>
+#include <string.h>
+#include <GL/glew.h>
+#include <GLFW/glfw3.h>
+
+// Window size
+const GLint WIDTH = 800;
+const GLint HEIGHT = 600;
+
+// Each object we draw will need to have it's own VAO, VBO and ShaderProgram
+GLuint VertexArrayObject, VertexBufferObject, ShaderProgram;
+
+// Vertex Shader Code
+static const char* VertexShader = "                \n\
+#version 330                                       \n\
+                                                   \n\
+layout (location = 0) in vec3 pos;                 \n\
+                                                   \n\
+void main()                                        \n\
+{                                                  \n\
+   gl_Position = vec4(pos.x, pos.y, pos.z, 1.0);   \n\
+}";
+
+// Fragment Shader Code
+static const char* PixelShader = "     \n\
+#version 330                           \n\
+                                       \n\
+out vec4 color;                        \n\
+                                       \n\
+void main()                            \n\
+{                                      \n\
+    color = vec4(1.0, 0.0, 0.0, 1.0);  \n\
+}";
+```
+
+###### 2. Define a Generic Error Handler
+
+This error handler function is defined for later use, whenever a shader program needs linking and validation, or when a shader needs to compile.
+if `Compiling == true` then we know we are dealing with a shader - but if it is false, we know we are dealing with a program.
+
+```cpp
+// Provide basic generic testing for Shaders / Shader Programs
+bool VerifyIsValid(GLuint ShaderProgram, GLenum StatusType)
+{
+    // Determine test type
+    const bool Compiling = StatusType == GL_COMPILE_STATUS;
+
+    // Define internal data storage for status and logs
+    static GLchar Log[1024] = { 0 };
+    GLint Result = 0;
+
+    // Get validity status from Program/Shader
+    Compiling ?
+        glGetShaderiv(ShaderProgram, StatusType, &Result)
+        :
+        glGetProgramiv(ShaderProgram, StatusType, &Result)
+        ;
+    if (!Result)
+    {
+        // Get error info logs
+        Compiling ?
+            glGetShaderInfoLog(ShaderProgram, sizeof(Log), NULL, Log)
+            :
+            glGetProgramInfoLog(ShaderProgram, sizeof(Log), NULL, Log)
+            ;
+        printf("Shader creation of %d type FAILED! \n Log Info: \n %s", StatusType, Log);
+
+        // Test Failure
+        return false;
+    }
+    else {
+        // Test Success
+        return true;
+    }
+}
+```
+
+###### 3. Define Function For Shader Instantiation
+
+This function is responsible for taking a shader program and initializing a living shader instance of the desired type (fragment, vertex, etc...).
+
+We then create a new pointer to a `GLchar` and point it's first character to read the code `const char*` string directly from memory.
+Additionally, the length of the "code file" is stored for memory allocation later.
+
+From there on we proceed with assigning the shader data to the newly created shader instance, compile it, verify it is valid, and finally attach it to the working context.
+
+```cpp
+// Instantiate a single Shader Pass
+void CreateShader(GLuint ShaderProgram, const char* ShaderCode, GLenum ShaderType)
+{
+   // Instantiate a new Shader
+   GLuint Shader = glCreateShader(ShaderType);
+
+   // Get reference to the code of the Shader, and store it's length
+   const GLchar* Code[1];
+   Code[0] = ShaderCode;
+
+   GLint CodeLength[1];
+   CodeLength[0] = strlen(ShaderCode);
+
+   /*
+   Assign the code to the newly Instantiated shader,
+   and allocate memory in storage according to the code's length
+   */
+   glShaderSource(Shader, 1, Code, CodeLength);
+
+   // Compile the shader
+   glCompileShader(Shader);
+
+   // Verify the shader has compiled
+   VerifyIsValid(Shader, GL_COMPILE_STATUS);
+
+   //If compiled successfully, the shader still has to be attached to the OpenGL context
+   glAttachShader(ShaderProgram, Shader);
+}
+```
+
+###### 4. Define Function For Compiling the Shaders
+
+This function takes the globally declared variable reserved for the ID of the `ShaderProgram`, and initializes a new shader program.
+Upon initialization, this variable would store the ID generated for the shader program, returned from the `glCreateProgram()` function.
+
+Once initialized, the program is then passed to our previously created function, `CreateShader()`, for instantiating the Vertex and Pixel shaders.
+
+Finally, the program is linked, and validated.
+
+- NOTE:
+  - In a real app scenario (where multiple objects/assets and shader programs are involved), This function would be called `CompileShader()`, storing generic instructions for creating shaders and programs - while another function would be called `CompileShaders()` where all of the shader programs that needs to be compiled will be specified, allowing chunk compilation of all your shaders in a single call.
+
+```cpp
+// Create a new shader program and compile it's individual components
+void CompileShaders()
+{
+   // Initialize a new Shader Program
+   ShaderProgram = glCreateProgram();
+
+   if (!ShaderProgram) {
+      printf("Shader program creation FAILED!");
+      return;
+   }
+
+   // Instantiate the Vertex & Pixel Shaders
+   CreateShader(ShaderProgram, VertexShader, GL_VERTEX_SHADER);
+   CreateShader(ShaderProgram, PixelShader, GL_FRAGMENT_SHADER);
+
+   // Link the program with the GPU, and verify LINK is valid
+   glLinkProgram(ShaderProgram);
+   VerifyIsValid(ShaderProgram, GL_LINK_STATUS);
+
+   // Validate the program, and verify VALIDATE is valid
+   glValidateProgram(ShaderProgram);
+   VerifyIsValid(ShaderProgram, GL_VALIDATE_STATUS);
+}
+```
+
+###### 5. Define Function For Generating Topology
+
+In this example function, we create a simple triangle, composed of 3 vertices.
+
+- The triangle is composed within a 1D array, where each 3 subsequent members in the array describe the location of a single vertex.
+
+- After that, we generate a new ID for the VAO , and bind it to memory. We then proceed with doing the same for the VBO, generating a buffer and binding it to memory as well.
+
+- At this point, we have access to the buffer, so we pass data to that buffer and instruct it to use `GL_STATIC_DRAW`. While still there, we also define the link of the vertex data with the vertex shader layout position, and enable that link.
+
+- Finally, we clean-up by unbinding the buffer and the vertex array.
+
+```cpp
+// Define and Create Triangle topology
+void CreateTriangle()
+{
+   // Define vertices positioning
+   GLfloat Vertices[] = {
+      -1.0f, -1.0f, 0.0f,    //Vertex #1
+      1.0f, -1.0f, 0.0f,     //Vertex #2
+      0.0f, 1.0f, 0.0f       //Vertex #3
+   };
+
+   // Generate a vertex array, store it in the VAO, and bind it
+   glGenVertexArrays(1, &VertexArrayObject);
+   glBindVertexArray(VertexArrayObject);
+
+      // Generate buffer, store it in the VBO, and bind it
+      glGenBuffers(1, &VertexBufferObject);
+      glBindBuffer(GL_ARRAY_BUFFER, VertexBufferObject);
+
+         // Allocate storage for the buffer to upload the vertex array position data
+         glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * 9, Vertices, GL_STATIC_DRAW);
+         // Define the layout and settings of the vertex data
+         glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
+         // Enable attributes and link the vertex data with a `Layout Location`
+         glEnableVertexAttribArray(0);
+
+      // Unbind the buffer
+      glBindBuffer(GL_ARRAY_BUFFER, 0);
+   // Unbind the vertex data
+   glBindVertexArray(0);
+}
+```
+
+###### 6. Connecting Everything in the Main() Function
+
+In the main function, we would have all the `GLEW` and `GLFW` setup and initialization, to create the OpenGL context and Window.
+
+We then set up the scene rendering by creating the generating the topology and compiling the shaders.
+
+Lastly, we enter the main loop, where we finally execute the `ShaderProgram`, bind to it's vertex data, and draw it all to the screen.
+
+```cpp
+int main()
+{
+   // Initialise GLFW and verify it
+   if (!glfwInit())
+   {
+      printf("Initialisation Error!");
+      glfwTerminate();
+      return 1;
+   }
+
+   // Setup GLFW window properties
+   //OpenGL Version 3.3
+   glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+   glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+   //Force depcrated code below this version to NOT compile - CORE_PROFILE == No Backwards Compatability
+   glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+   //Allow backwards campatibility
+   glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+
+   // Create GLFW window
+   GLFWwindow* MainWindow = glfwCreateWindow(WIDTH, HEIGHT, "XVolatile", NULL, NULL);
+   if (!MainWindow)
+   {
+      printf("Window Initialisation Error!");
+      glfwTerminate();
+      return 1;
+   }
+
+   // Set Buffer Size information
+   int BufferWidth, BufferHeight;
+   glfwGetFramebufferSize(MainWindow, &BufferWidth, &BufferHeight);
+   // Set up Context for GLEW to use
+   glfwMakeContextCurrent(MainWindow);
+   // Enable Experimental features
+   glewExperimental = GLFW_TRUE;
+
+   // Create GLEW Context
+   if (glewInit() != GLEW_OK)
+   {
+      printf("Glew Initialisation Error!");
+      glfwDestroyWindow(MainWindow);
+      glfwTerminate();
+      return 1;
+   }
+
+   // Setup viewport Size
+   glViewport(0, 0, BufferWidth, BufferHeight);
+
+   // Initialize Scene rendering
+   CreateTriangle();
+   CompileShaders();
+
+   // Main Loop - Looping as long as the window is open
+   while (!glfwWindowShouldClose(MainWindow))
+   {
+      // Get & Handle user events
+      glfwPollEvents();
+
+      // Clear the screen color buffer and set overlay color
+      glClearColor(0.0f, 0.0f, 1.0f, 1.0f);
+      glClear(GL_COLOR_BUFFER_BIT);
+
+      // Run the Shader program
+      glUseProgram(ShaderProgram);
+
+         glBindVertexArray(VertexArrayObject);
+
+               glDrawArrays(GL_TRIANGLES, 0, 3);
+
+         glBindVertexArray(0);
+
+      glUseProgram(0);
+
+      //Replace the previous frame's scene and render the updated scene | RENDER CYCLE END
+      glfwSwapBuffers(MainWindow);
+   }
+
+   return 0;
+}
+```
+
+This concludes this code breakdown!
+
+#### Full Code Example
+
+This is the full code example of the entire setup and rendering operations.
+
+Do note, that this code will only compile after `GLEW` and `GLFW` are set-up, as demonstrated in the `Getting Started` article at the top of the document.
+
+Code:
+
+```cpp
+// XVolatile.cpp : This file contains the 'main' function. Program execution begins and ends here.
+
+// 1) - - - - - - - - - - - - - - - - - - - - - -
+
+#include <stdio.h>
+#include <string.h>
+#include <GL/glew.h>
+#include <GLFW/glfw3.h>
+
+// Window size
+const GLint WIDTH = 800;
+const GLint HEIGHT = 600;
+
+// Each object we draw will need to have it's own VAO, VBO and ShaderProgram
+GLuint VertexArrayObject, VertexBufferObject, ShaderProgram;
+
+// Vertex Shader Code
+static const char* VertexShader = "              \n\
+#version 330                                     \n\
+                                                 \n\
+layout (location = 0) in vec3 pos;               \n\
+                                                 \n\
+void main()                                      \n\
+{                                                \n\
+   gl_Position = vec4(pos.x, pos.y, pos.z, 1.0); \n\
+}";
+
+// Fragment Shader Code
+static const char* PixelShader = "     \n\
+#version 330                           \n\
+                                       \n\
+out vec4 color;                        \n\
+                                       \n\
+void main()                            \n\
+{                                      \n\
+   color = vec4(1.0, 0.0, 0.0, 1.0);   \n\
+}";
+
+// 2) - - - - - - - - - - - - - - - - - - - - - -
+
+// Provide basic generic testing for Shaders / Shader Programs
+bool VerifyIsValid(GLuint ShaderProgram, GLenum StatusType)
+{
+   // Determine test type
+   const bool Compiling = StatusType == GL_COMPILE_STATUS;
+
+   // Define internal data storage for status and logs
+   static GLchar Log[1024] = { 0 };
+   GLint Result = 0;
+
+   // Get validity status from Program/Shader
+   Compiling ?
+      glGetShaderiv(ShaderProgram, StatusType, &Result)
+      :
+      glGetProgramiv(ShaderProgram, StatusType, &Result)
+      ;
+   if (!Result)
+   {
+      // Get error info logs
+      Compiling ?
+         glGetShaderInfoLog(ShaderProgram, sizeof(Log), NULL, Log)
+         :
+         glGetProgramInfoLog(ShaderProgram, sizeof(Log), NULL, Log)
+         ;
+      printf("Shader creation of %d type FAILED! \n Log Info: \n %s", StatusType, Log);
+
+      // Test Failure
+      return false;
+   }
+   else {
+      // Test Success
+      return true;
+   }
+}
+
+// 3) - - - - - - - - - - - - - - - - - - - - - -
+
+// Instantiate a single Shader Pass
+void CreateShader(GLuint ShaderProgram, const char* ShaderCode, GLenum ShaderType)
+{
+   // Instantite a new Shader
+   GLuint Shader = glCreateShader(ShaderType);
+
+   // Get reference to the code of the Shader, and store it's length
+   const GLchar* Code[1];
+   Code[0] = ShaderCode;
+
+   GLint CodeLength[1];
+   CodeLength[0] = strlen(ShaderCode);
+
+   /*
+   Assign the code to the newly Instantiated shader,
+   and allocate memory in storage according to the code's length
+   */
+   glShaderSource(Shader, 1, Code, CodeLength);
+
+   // Compile the shader
+   glCompileShader(Shader);
+
+   // Verify the shader has compiled
+   VerifyIsValid(Shader, GL_COMPILE_STATUS);
+
+   //If compiled sucessfully, the shader still has to be attached to the OpenGL context
+   glAttachShader(ShaderProgram, Shader);
+
+   //glDetachShader(ShaderProgram, Shader);
+}
+
+// 4) - - - - - - - - - - - - - - - - - - - - - -
+
+// Create a new shader program and compile it's individual components
+void CompileShaders()
+{
+   // Initialize a new Shader Program
+   ShaderProgram = glCreateProgram();
+
+   if (!ShaderProgram) {
+      printf("Shader program creation FAILED!");
+      return;
+   }
+
+   // Instantiate the Vertex & Pixel Shaders
+   CreateShader(ShaderProgram, VertexShader, GL_VERTEX_SHADER);
+   CreateShader(ShaderProgram, PixelShader, GL_FRAGMENT_SHADER);
+
+   // Link the program with the GPU, and verify LINK is valid
+   glLinkProgram(ShaderProgram);
+   VerifyIsValid(ShaderProgram, GL_LINK_STATUS);
+
+   // Validate the program, and verify VALIDATE is valid
+   glValidateProgram(ShaderProgram);
+   VerifyIsValid(ShaderProgram, GL_VALIDATE_STATUS);
+}
+
+// 5) - - - - - - - - - - - - - - - - - - - - - -
+
+// Define and Create Triangle topology
+void CreateTriangle()
+{
+   // Define vertices positioning
+   GLfloat Vertices[] = {
+      -1.0f, -1.0f, 0.0f,     //Vertex #1
+      1.0f, -1.0f, 0.0f,      //Vertex #2
+      0.0f, 1.0f, 0.0f        //Vertex #3
+   };
+
+   // Generate a vertex array, store it in the VAO, and bind it
+   glGenVertexArrays(1, &VertexArrayObject);
+   glBindVertexArray(VertexArrayObject);
+
+      // Generate buffer, store it in the VBO, and bind it
+      glGenBuffers(1, &VertexBufferObject);
+      glBindBuffer(GL_ARRAY_BUFFER, VertexBufferObject);
+
+         // Allocate storage for the buffer to pass the vertex array position data
+         glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * 9, Vertices, GL_STATIC_DRAW);
+         // Define the layout and settings of the vertex data
+         glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
+         // Enable attributes and link the vertex data with a `Layout Location`
+         glEnableVertexAttribArray(0);
+
+      // Unbind the buffer
+      glBindBuffer(GL_ARRAY_BUFFER, 0);
+   // Unbined the vertex data
+   glBindVertexArray(0);
+}
+
+// 6) - - - - - - - - - - - - - - - - - - - - - -
+
+// Main function - Initialization, Compilation and Rendering
+int main()
+{
+   // Initialise GLFW and verify it
+   if (!glfwInit())
+   {
+      printf("Initialisation Error!");
+      glfwTerminate();
+      return 1;
+   }
+
+   // Setup GLFW window properties
+   //OpenGL Version 3.3
+   glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+   glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+   //Force depcrated code below this version to NOT compile - CORE_PROFILE == No Backwards Compatability
+   glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+   //Allow backwards campatibility
+   glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+
+   // Create GLFW window
+   GLFWwindow* MainWindow = glfwCreateWindow(WIDTH, HEIGHT, "XVolatile", NULL, NULL);
+   if (!MainWindow)
+   {
+      printf("Window Initialisation Error!");
+      glfwTerminate();
+      return 1;
+   }
+
+   // Set Buffer Size information
+   int BufferWidth, BufferHeight;
+   glfwGetFramebufferSize(MainWindow, &BufferWidth, &BufferHeight);
+   // Set up Context for GLEW to use
+   glfwMakeContextCurrent(MainWindow);
+   // Enable Experimental features
+   glewExperimental = GLFW_TRUE;
+
+   // Create GLEW Context
+   if (glewInit() != GLEW_OK)
+   {
+      printf("Glew Initialisation Error!");
+      glfwDestroyWindow(MainWindow);
+      glfwTerminate();
+      return 1;
+   }
+
+   // Setup viewport Size
+   glViewport(0, 0, BufferWidth, BufferHeight);
+
+   // Initialize Scene rendering
+   CreateTriangle();
+   CompileShaders();
+
+   // Main Loop - Looping as long as the window is open
+   while (!glfwWindowShouldClose(MainWindow))
+   {
+      // Get & Handle user events
+      glfwPollEvents();
+
+      // Clear the screen color buffer and set overlay color
+      glClearColor(0.0f, 0.0f, 1.0f, 1.0f);
+      glClear(GL_COLOR_BUFFER_BIT);
+
+      // Run the Shader program
+      glUseProgram(ShaderProgram);
+
+         glBindVertexArray(VertexArrayObject);
+
+               glDrawArrays(GL_TRIANGLES, 0, 3);
+
+         glBindVertexArray(0);
+
+      glUseProgram(0);
+
+      // Replace the previous frame's scene and render the updated scene | RENDER CYCLE END
+      glfwSwapBuffers(MainWindow);
+   }
+
+   return 0;
+}
+
+```
