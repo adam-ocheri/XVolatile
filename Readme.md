@@ -1034,7 +1034,7 @@ Code:
 ```cpp
 // XVolatile.cpp : This file contains the 'main' function. Program execution begins and ends here.
 
-// 1) - - - - - - - - - - - - - - - - - - - - - -
+// 1) - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 #include <stdio.h>
 #include <string.h>
@@ -1070,7 +1070,7 @@ void main()                            \n\
    color = vec4(1.0, 0.0, 0.0, 1.0);   \n\
 }";
 
-// 2) - - - - - - - - - - - - - - - - - - - - - -
+// 2) - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 // Provide basic generic testing for Shaders / Shader Programs
 bool VerifyIsValid(GLuint ShaderProgram, GLenum StatusType)
@@ -1107,7 +1107,7 @@ bool VerifyIsValid(GLuint ShaderProgram, GLenum StatusType)
    }
 }
 
-// 3) - - - - - - - - - - - - - - - - - - - - - -
+// 3) - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 // Instantiate a single Shader Pass
 void CreateShader(GLuint ShaderProgram, const char* ShaderCode, GLenum ShaderType)
@@ -1140,7 +1140,7 @@ void CreateShader(GLuint ShaderProgram, const char* ShaderCode, GLenum ShaderTyp
    //glDetachShader(ShaderProgram, Shader);
 }
 
-// 4) - - - - - - - - - - - - - - - - - - - - - -
+// 4) - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 // Create a new shader program and compile it's individual components
 void CompileShaders()
@@ -1166,7 +1166,7 @@ void CompileShaders()
    VerifyIsValid(ShaderProgram, GL_VALIDATE_STATUS);
 }
 
-// 5) - - - - - - - - - - - - - - - - - - - - - -
+// 5) - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 // Define and Create Triangle topology
 void CreateTriangle()
@@ -1199,7 +1199,7 @@ void CreateTriangle()
    glBindVertexArray(0);
 }
 
-// 6) - - - - - - - - - - - - - - - - - - - - - -
+// 6) - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 // Main function - Initialization, Compilation and Rendering
 int main()
