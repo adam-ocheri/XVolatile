@@ -1,19 +1,41 @@
 # XVolatile
 
-<ul>
-   <li><a href="#getting-started">Getting Started</a></li>  
-   <li><a href="#initializing-glfw-window">Initializing The Window</a></li>   
-   <li><a href="#rendering-pipeline">Rendering Pipeline Stages</a></li> 
-   <li><a href="#coords">OpenGL Coordinate System</a></li> 
-   <li><a href="#rendering-pipeline">Section 1</a>
-      <ul>
-         <li><a href="#subsection-1-1">Subsection 1.1</a></li>
-      </ul>
-   </li>
-  <li><a href="#section-2">Section 2</a></li>
-</ul>
+- [Getting Started](#getting-started)
 
-## Getting Started {#getting-started}
+- [Initializing The Window](#initializing-the-window)
+
+- [Rendering Pipeline Stages](#rendering-pipeline-stages)
+
+- [OpenGL Coordinate System](#opengl-coordinate-system)
+
+- [Rendering In Practice](#rendering-in-practice)
+
+  - [Part I) Vertex Specification Setup](#part-i-vertex-specification-setup)
+    - [1. Define the shape to render](#1-define-the-shape-to-render)
+    - [2. Create a VAO](#2-create-a-vao)
+    - [3. Create a VBO](#3-create-a-vbo)
+    - [4. UnBind the VBO and VAO](#4-unbind-the-vbo-and-vao)
+  - [Part II) Shading & Rendering Process](#part-ii-shading--rendering-process)
+    - [Vertex Shader Basics](#vertex-shader-basics)
+    - [Fragment Shader Basics](#fragment-shader-basics)
+    - [Error Handling Concerns](#error-handling-concerns)
+    - [Executing Shader Programs](#executing-shader-programs)
+    - [Compiling Shaders](#compiling-shaders)
+    - [GPU Rendering](#gpu-rendering)
+
+- [Connecting The Pieces](#connecting-the-pieces)
+
+  - [Breakdown](#breakdown)
+    - [1. Global Variables & Shaders Definition](#1-global-variables--shaders-definition)
+    - [2. Define a Generic Error Handler](#2-define-a-generic-error-handler)
+    - [3. Define Function For Shader Instantiation](#3-define-function-for-shader-instantiation)
+    - [4. Define Function For Compiling the Shaders](#4-define-function-for-compiling-the-shaders)
+    - [5. Define Function For Generating Topology](#5-define-function-for-generating-topology)
+    - [6. Connecting Everything in the Main() Function](#6-connecting-everything-in-the-main-function)
+
+- [Full Code Example](#full-code-example)
+
+## Getting Started
 
 `GLEW` : The OpenGL Extension Wrangler Library (GLEW) is a cross-platform open-source C/C++ extension loading library. GLEW provides efficient run-time mechanisms for determining which OpenGL extensions are supported on the target platform.
 https://glew.sourceforge.net/
@@ -39,7 +61,7 @@ These are the subsequent steps to take:
    - glfw3.lib;
 5. Copy the Dynamic Linking Library file `glew32.dll` from `ExternalLibs\glew-2.1.0\bin\Release\x64` to the root solution directory.
 
-## Initializing the Window {#initializing-glfw-window}
+## Initializing the Window
 
 The `XVolatile.cpp` file is the main entry point into the application, housing the `int main()` function, where the GLFW Window is created.
 Initialization of the app and the window is a simple process, involving these following steps:
@@ -60,7 +82,7 @@ Initialization of the app and the window is a simple process, involving these fo
    - Clear the previous frame buffer using `glClear()`. This function accepts an argument, to be told specifically which resource to clear
    - Replace the previously drawn scene/frame, with the new and currently updated scene/frame - using `glfwSwapBuffers(mainWindow);`
 
-## Rendering Pipeline Stages {#rendering-pipeline}
+## Rendering Pipeline Stages
 
 Rendering is a multi-staged process in which a 3d scene (which is comprised of vector data, matrices, polygons and their coordinate data, shading, and more) has it's data sent to the GPU to be processed and rendered to the screen.
 This process spans across 9 distinct stages, where 4 of these stages are reserved for Shading:
@@ -153,7 +175,7 @@ Here is a more in-depth perspective at most of these stages:
 
 - Shader programs are created with at least a Vertex Shader and then activated before use
 
-## OpenGL Coordinate System {#coords}
+## OpenGL Coordinate System
 
 OpenGL uses `X` for Left to Right, `Y` for Up and Down, and `Z` for forwards and backwards like depth.
 
