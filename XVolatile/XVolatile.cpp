@@ -129,10 +129,11 @@ void CompileShaders()
 // Define and Create Triangle topology 
 void CreateTriangle()
 {
+    // Define vertices positioning
     GLfloat Vertices[] = {
-        -1.0f, -1.0f, 0.0f,
-        1.0f, -1.0f, 0.0f,
-        0.0f, 1.0f, 0.0f
+        -1.0f, -1.0f, 0.0f,     //Vertex #1
+        1.0f, -1.0f, 0.0f,      //Vertex #2
+        0.0f, 1.0f, 0.0f        //Vertex #3
     };
 
     // Generate a vertex array, store it in the VAO, and bind it
@@ -158,7 +159,7 @@ void CreateTriangle()
 
 int main()
 {
-    //todo Initialise GLFW and verify it
+    // Initialise GLFW and verify it
     if (!glfwInit())
     {
         printf("Initialisation Error!");
@@ -166,7 +167,7 @@ int main()
         return 1;
     }
 
-    //todo Setup GLFW window properties
+    // Setup GLFW window properties
     //OpenGL Version 3.3
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
@@ -175,7 +176,7 @@ int main()
     //Allow backwards campatibility
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 
-    //todo Create GLFW window
+    // Create GLFW window
     GLFWwindow* MainWindow = glfwCreateWindow(WIDTH, HEIGHT, "XVolatile", NULL, NULL);
     if (!MainWindow)
     {
@@ -183,15 +184,16 @@ int main()
         glfwTerminate();
         return 1;
     }
-    //Set Buffer Size information
+
+    // Set Buffer Size information
     int BufferWidth, BufferHeight;
     glfwGetFramebufferSize(MainWindow, &BufferWidth, &BufferHeight);
-    //Set up Context for GLEW to use
+    // Set up Context for GLEW to use
     glfwMakeContextCurrent(MainWindow);
-    //Enable Experimental features
+    // Enable Experimental features
     glewExperimental = GLFW_TRUE;
 
-    //todo Create GLEW Context
+    // Create GLEW Context
     if (glewInit() != GLEW_OK)
     {
         printf("Glew Initialisation Error!");
@@ -200,25 +202,24 @@ int main()
         return 1;
     }
 
-    //todo Setup viewport Size
+    // Setup viewport Size
     glViewport(0, 0, BufferWidth, BufferHeight);
 
-    //Initialize Scene rendering
+    // Initialize Scene rendering
     CreateTriangle();
     CompileShaders();
 
-    //todo Main Loop
-    //Looping as long as the window is open
+    // Main Loop - Looping as long as the window is open
     while (!glfwWindowShouldClose(MainWindow))
     {
         // Get & Handle user events
         glfwPollEvents();
 
-        //Clear the screen color buffer and set overlay color
+        // Clear the screen color buffer and set overlay color
         glClearColor(0.0f, 0.0f, 1.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
 
-        //Run the Shader program
+        // Run the Shader program
         glUseProgram(ShaderProgram);
 
             glBindVertexArray(VertexArrayObject);
@@ -229,7 +230,7 @@ int main()
 
         glUseProgram(0);
 
-        //Replace the previous frame's scene and render the updated scene | RENDER CYCLE END
+        // Replace the previous frame's scene and render the updated scene | RENDER CYCLE END
         glfwSwapBuffers(MainWindow);
     }
 

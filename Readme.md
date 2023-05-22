@@ -1,6 +1,19 @@
 # XVolatile
 
-## Getting Started
+<ul>
+   <li><a href="#getting-started">Getting Started</a></li>  
+   <li><a href="#initializing-glfw-window">Initializing The Window</a></li>   
+   <li><a href="#rendering-pipeline">Rendering Pipeline Stages</a></li> 
+   <li><a href="#coords">OpenGL Coordinate System</a></li> 
+   <li><a href="#rendering-pipeline">Section 1</a>
+      <ul>
+         <li><a href="#subsection-1-1">Subsection 1.1</a></li>
+      </ul>
+   </li>
+  <li><a href="#section-2">Section 2</a></li>
+</ul>
+
+## Getting Started {#getting-started}
 
 `GLEW` : The OpenGL Extension Wrangler Library (GLEW) is a cross-platform open-source C/C++ extension loading library. GLEW provides efficient run-time mechanisms for determining which OpenGL extensions are supported on the target platform.
 https://glew.sourceforge.net/
@@ -26,7 +39,7 @@ These are the subsequent steps to take:
    - glfw3.lib;
 5. Copy the Dynamic Linking Library file `glew32.dll` from `ExternalLibs\glew-2.1.0\bin\Release\x64` to the root solution directory.
 
-## Initializing the Window
+## Initializing the Window {#initializing-glfw-window}
 
 The `XVolatile.cpp` file is the main entry point into the application, housing the `int main()` function, where the GLFW Window is created.
 Initialization of the app and the window is a simple process, involving these following steps:
@@ -47,7 +60,7 @@ Initialization of the app and the window is a simple process, involving these fo
    - Clear the previous frame buffer using `glClear()`. This function accepts an argument, to be told specifically which resource to clear
    - Replace the previously drawn scene/frame, with the new and currently updated scene/frame - using `glfwSwapBuffers(mainWindow);`
 
-## Rendering Pipeline Stages
+## Rendering Pipeline Stages {#rendering-pipeline}
 
 Rendering is a multi-staged process in which a 3d scene (which is comprised of vector data, matrices, polygons and their coordinate data, shading, and more) has it's data sent to the GPU to be processed and rendered to the screen.
 This process spans across 9 distinct stages, where 4 of these stages are reserved for Shading:
@@ -140,7 +153,7 @@ Here is a more in-depth perspective at most of these stages:
 
 - Shader programs are created with at least a Vertex Shader and then activated before use
 
-## OpenGL Coordinate System
+## OpenGL Coordinate System {#coords}
 
 OpenGL uses `X` for Left to Right, `Y` for Up and Down, and `Z` for forwards and backwards like depth.
 
@@ -1029,7 +1042,37 @@ This is the full code example of the entire setup and rendering operations.
 
 Do note, that this code will only compile after `GLEW` and `GLFW` are set-up, as demonstrated in the `Getting Started` article at the top of the document.
 
-Code:
+The provided code is a C++ program that demonstrates the basic setup and usage of shaders in OpenGL. It creates a window using GLFW, sets up an OpenGL context, and renders a simple triangle using shaders.
+
+Here's a breakdown of the code:
+
+1. The necessary header files are included: `<stdio.h>` for printing messages, `<string.h>` for string manipulation, `<GL/glew.h>` for OpenGL extension loading, and `<GLFW/glfw3.h>` for window management.
+
+2. The window size is defined using the constants WIDTH and HEIGHT.
+
+3. Global variables are declared for the Vertex Array Object (VAO), Vertex Buffer Object (VBO), and Shader Program.
+
+4. Vertex and Fragment shader code are defined as character arrays (VertexShader and PixelShader).
+
+5. The `VerifyIsValid()` function is defined to check the validity of shaders and shader programs.
+
+6. The `CreateShader()` function is defined to compile and attach shaders to the shader program.
+
+7. The `CompileShaders()` function is defined to create a shader program and compile its individual components (vertex and fragment shaders).
+
+8. The `CreateTriangle()` function is defined to set up the vertices of a triangle and create the VAO and VBO for rendering it.
+
+9. The `main()` function is where the program execution starts. It initializes GLFW, creates a window, sets up OpenGL context, and initializes GLEW.
+
+10. The viewport size is set to match the window's framebuffer size.
+
+11. The `CreateTriangle()` and `CompileShaders()` functions are called to set up the triangle geometry and compile the shaders.
+
+12. The main loop begins (`while (!glfwWindowShouldClose(MainWindow))`), where user events are polled, the screen is cleared, and the triangle is drawn using the shader program.
+
+13. Finally, the updated scene is rendered (`glfwSwapBuffers(MainWindow)`) and the program continues until the user closes the window.
+
+In summary, this code sets up a window, creates a triangle using vertex and fragment shaders, and continuously renders the triangle until the window is closed. It provides a basic framework for understanding shader compilation, shader programs, and rendering with OpenGL.
 
 ```cpp
 // XVolatile.cpp : This file contains the 'main' function. Program execution begins and ends here.
