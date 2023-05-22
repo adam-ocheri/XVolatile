@@ -139,7 +139,13 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="ShaderManager.cpp" />
+    <ClCompile Include="WindowManager.cpp" />
     <ClCompile Include="XVolatile.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="ShaderManager.h" />
+    <ClInclude Include="WindowManager.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

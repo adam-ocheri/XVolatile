@@ -1,3 +1,6 @@
-﻿  XVolatile.cpp
-C:\Projects\VisualStudioPrograms\Graphics\OpenGL\Source\XVolatile\XVolatile.cpp(70,39): warning C4267: '=': conversion from 'size_t' to 'GLint', possible loss of data
-  XVolatile.vcxproj -> C:\Projects\VisualStudioPrograms\Graphics\OpenGL\Source\XVolatile\x64\Debug\XVolatile.exe
+﻿  ShaderManager.cpp
+C:\Projects\VisualStudioPrograms\Graphics\OpenGL\Source\1-Transformations\ShaderManager.cpp(61,39): warning C4267: '=': conversion from 'size_t' to 'GLint', possible loss of data
+  XVolatile.cpp
+C:\Projects\VisualStudioPrograms\Graphics\OpenGL\Source\1-Transformations\XVolatile.cpp(67,39): warning C4267: '=': conversion from 'size_t' to 'GLint', possible loss of data
+  Generating Code...
+  XVolatile.vcxproj -> C:\Projects\VisualStudioPrograms\Graphics\OpenGL\Source\1-Transformations\x64\Debug\XVolatile.exe

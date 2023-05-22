@@ -32,8 +32,7 @@
     - [4. Define Function For Compiling the Shaders](#4-define-function-for-compiling-the-shaders)
     - [5. Define Function For Generating Topology](#5-define-function-for-generating-topology)
     - [6. Connecting Everything in the Main() Function](#6-connecting-everything-in-the-main-function)
-
-- [Full Code Example](#full-code-example)
+  - [Full Code Example](#full-code-example)
 
 ## Getting Started
 
