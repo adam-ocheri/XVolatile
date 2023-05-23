@@ -2,14 +2,14 @@
 
 ShaderManager::ShaderManager()
 {
-    CompileShaders();
-    CreateTriangle();
+    //CompileShaders();
+    //CreateTriangle();
 }
 
 ShaderManager::~ShaderManager()
 {
-    delete VertexShader;
-    delete PixelShader;
+    //delete[] VertexShader;
+    //delete[] PixelShader;
 }
 
 // Provide basic generic testing for Shaders / Shader Programs
@@ -47,6 +47,12 @@ bool ShaderManager::VerifyIsValid(GLuint ShaderProgram, GLenum StatusType)
     }
 }
 
+void ShaderManager::RegisterShader(GLuint ShaderProgram, const char* ShaderCode, GLenum ShaderType)
+{
+    //map<GLuint, const char*, GLenum> Map(std::initializer_list<>{ ShaderProgram, ShaderCode, ShaderType });
+    ShaderMaps.push_back({ {0, std::make_tuple(ShaderProgram , ShaderCode , ShaderType)} });
+}
+
 // Instantiate a single Shader Pass
 void ShaderManager::CreateShader(GLuint ShaderProgram, const char* ShaderCode, GLenum ShaderType)
 {
@@ -81,25 +87,66 @@ void ShaderManager::CreateShader(GLuint ShaderProgram, const char* ShaderCode, G
 // Create a new shader program and compile it's individual components
 void ShaderManager::CompileShaders()
 {
+    
+
+    for (const auto& ShaderMap : ShaderMaps)
+    {
+        //ShaderMap.at(0);
+        for (const auto& shaderMap : ShaderMap)
+        {
+            std::tuple<GLuint, const char*, GLenum> value = shaderMap.second;
+
+            GLuint SP = std::get<0>(value);
+            const char* Code = std::get<1>(value);
+            GLenum Type = std::get<2>(value);
+
+            CompileShader(SP, Code, Type);
+        }
+
+        // Link the program with the GPU, and verify LINK is valid
+        glLinkProgram(ShaderProgram);
+        VerifyIsValid(ShaderProgram, GL_LINK_STATUS);
+
+        // Validate the program, and verify VALIDATE is valid
+        glValidateProgram(ShaderProgram);
+        VerifyIsValid(ShaderProgram, GL_VALIDATE_STATUS);
+    }
+}
+
+void ShaderManager::CompileShader(GLuint ShaderProgram, const char* ShaderCode, GLenum ShaderType)
+{
     // Initialize a new Shader Program
-    ShaderProgram = glCreateProgram();
+    //ShaderProgram = glCreateProgram();
 
     if (!ShaderProgram) {
-        printf("Shader program creation FAILED!");
+        printf("Shader program INVALID!");
         return;
     }
 
     // Instantiate the Vertex & Pixel Shaders
-    CreateShader(ShaderProgram, VertexShader, GL_VERTEX_SHADER);
-    CreateShader(ShaderProgram, PixelShader, GL_FRAGMENT_SHADER);
+    CreateShader(ShaderProgram, ShaderCode, ShaderType);
+    //CreateShader(ShaderProgram, PixelShader, GL_FRAGMENT_SHADER);
 
-    // Link the program with the GPU, and verify LINK is valid
-    glLinkProgram(ShaderProgram);
-    VerifyIsValid(ShaderProgram, GL_LINK_STATUS);
+    
+}
 
-    // Validate the program, and verify VALIDATE is valid
-    glValidateProgram(ShaderProgram);
-    VerifyIsValid(ShaderProgram, GL_VALIDATE_STATUS);
+void ShaderManager::GatherResources(GLuint shaderProgram, const char* vertexShader, const char* pixelShader)
+{
+    ShaderProgram = shaderProgram;
+    //VertexShader = vertexShader;
+    //PixelShader = pixelShader;
+    RegisterShader(ShaderProgram, vertexShader, GL_VERTEX_SHADER);
+    RegisterShader(ShaderProgram, pixelShader, GL_FRAGMENT_SHADER);
+}
+
+void ShaderManager::GatherResources(ShaderBase* ShaderData)
+{
+    ShaderProgram = ShaderData->ShaderProgram;
+    //VertexShader = ShaderData->VertexShader.c_str();
+    //PixelShader = ShaderData->PixelShader.c_str();
+
+    RegisterShader(ShaderProgram, ShaderData->VertexShader.c_str(), GL_VERTEX_SHADER);
+    RegisterShader(ShaderProgram, ShaderData->PixelShader.c_str(), GL_FRAGMENT_SHADER);
 }
 
 void ShaderManager::Render()

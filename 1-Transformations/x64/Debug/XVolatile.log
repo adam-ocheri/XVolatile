@@ -1,6 +1,8 @@
-﻿  ShaderManager.cpp
-C:\Projects\VisualStudioPrograms\Graphics\OpenGL\Source\1-Transformations\ShaderManager.cpp(61,39): warning C4267: '=': conversion from 'size_t' to 'GLint', possible loss of data
+﻿  Renderer.cpp
+  ShaderBase.cpp
+  ShaderManager.cpp
+C:\Projects\VisualStudioPrograms\Graphics\OpenGL\Source\1-Transformations\ShaderManager.cpp(67,39): warning C4267: '=': conversion from 'size_t' to 'GLint', possible loss of data
   XVolatile.cpp
-C:\Projects\VisualStudioPrograms\Graphics\OpenGL\Source\1-Transformations\XVolatile.cpp(67,39): warning C4267: '=': conversion from 'size_t' to 'GLint', possible loss of data
   Generating Code...
+LINK : warning LNK4098: defaultlib 'MSVCRT' conflicts with use of other libs; use /NODEFAULTLIB:library
   XVolatile.vcxproj -> C:\Projects\VisualStudioPrograms\Graphics\OpenGL\Source\1-Transformations\x64\Debug\XVolatile.exe
