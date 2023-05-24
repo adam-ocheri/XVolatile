@@ -25,7 +25,7 @@ public:
 	ShaderBase(Vector4 color, Vector4 posOffset);
 	~ShaderBase();
 
-	
+	size_t AttributePointer_LayoutLocation = 0;
 
 	Vector4 Color;
 	Vector4 PositionOffset;

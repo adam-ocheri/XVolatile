@@ -142,6 +142,8 @@
     <ClCompile Include="Renderer.cpp" />
     <ClCompile Include="ShaderBase.cpp" />
     <ClCompile Include="ShaderManager.cpp" />
+    <ClCompile Include="ShaderProgramManager.cpp" />
+    <ClCompile Include="TopologyBase.cpp" />
     <ClCompile Include="WindowManager.cpp" />
     <ClCompile Include="XVolatile.cpp" />
   </ItemGroup>
@@ -149,6 +151,8 @@
     <ClInclude Include="Renderer.h" />
     <ClInclude Include="ShaderBase.h" />
     <ClInclude Include="ShaderManager.h" />
+    <ClInclude Include="ShaderProgramManager.h" />
+    <ClInclude Include="TopologyBase.h" />
     <ClInclude Include="WindowManager.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

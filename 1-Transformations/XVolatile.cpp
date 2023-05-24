@@ -25,8 +25,11 @@ int main()
 
     //Renderer->GatherResources(Shader->ShaderProgram, Shader->VertexShader.c_str(), Shader->PixelShader.c_str());
     Renderer->GatherResources(Shader);
-    Renderer->CompileShaders();
+
     Renderer->CreateTriangle();
+
+    Renderer->CompileShaders();
+    
 
     // Main Loop - Looping as long as the window is open
     while (MainWindow->GetIsWindowOpen())

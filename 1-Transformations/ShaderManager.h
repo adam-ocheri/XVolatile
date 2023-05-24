@@ -28,6 +28,8 @@ public:
 	GLuint VertexBufferObject;
 	GLuint ShaderProgram;
 
+	ShaderBase* Shader;
+
 	vector<GLuint> VBOA;
 	vector<map<int, std::tuple<GLuint, const char*, GLenum>>> ShaderMaps;
 
