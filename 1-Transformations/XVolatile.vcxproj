@@ -140,6 +140,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Renderer.cpp" />
+    <ClCompile Include="ResourcePackage.cpp" />
     <ClCompile Include="ShaderBase.cpp" />
     <ClCompile Include="ShaderManager.cpp" />
     <ClCompile Include="ResourceManager.cpp" />
@@ -149,6 +150,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Renderer.h" />
+    <ClInclude Include="ResourcePackage.h" />
     <ClInclude Include="ShaderBase.h" />
     <ClInclude Include="ShaderManager.h" />
     <ClInclude Include="ResourceManager.h" />

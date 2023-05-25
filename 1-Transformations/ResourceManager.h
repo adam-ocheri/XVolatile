@@ -2,6 +2,7 @@
 
 #include "ShaderManager.h"
 #include "TopologyBase.h"
+#include "ResourcePackage.h"
 #include <vector>
 
 class ResourceManager
@@ -9,7 +10,7 @@ class ResourceManager
 private:
 	vector<ShaderManager*> ShaderPrograms;
 	vector<TopologyBase*> TopologyGroups;
-
+	vector<ResourcePackage*> ResourcePackages;
 	
 public:
 	//static int BufferLocation;
