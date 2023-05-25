@@ -19,6 +19,8 @@ struct Vector4
 
 class ShaderBase
 {
+private:
+	static size_t LayoutLocation;
 public:
 	ShaderBase();
 	ShaderBase(Vector4 color);

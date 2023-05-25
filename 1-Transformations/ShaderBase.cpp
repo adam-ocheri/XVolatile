@@ -1,9 +1,12 @@
 #include "ShaderBase.h"
 #include <sstream>
 
+size_t ShaderBase::LayoutLocation = -1;
 
 ShaderBase::ShaderBase()
 {
+	AttributePointer_LayoutLocation = ++LayoutLocation;
+
 	Color = Vector4(0.0f, 0.0f, 0.0f, 0.0f);
 	// Initialize a new Shader Program
 	ShaderProgram = glCreateProgram();
@@ -35,9 +38,10 @@ ShaderBase::ShaderBase()
 		}";
 }
 
-ShaderBase::ShaderBase(Vector4 color)
+ShaderBase::ShaderBase(Vector4 color) : Color(color)
 {
-	Color = color;
+	AttributePointer_LayoutLocation = ++LayoutLocation;
+
 	// Initialize a new Shader Program
 	ShaderProgram = glCreateProgram();
 
@@ -76,14 +80,12 @@ ShaderBase::ShaderBase(Vector4 color)
 
 }
 
-ShaderBase::ShaderBase(Vector4 color, Vector4 posOffset)
+ShaderBase::ShaderBase(Vector4 color, Vector4 posOffset) : Color(color), PositionOffset(posOffset)
 {
-	Color = color;
-	PositionOffset = posOffset;
+	AttributePointer_LayoutLocation = ++LayoutLocation;
 
 	// Initialize a new Shader Program
 	ShaderProgram = glCreateProgram();
-
 
 	std::stringstream formattedVS;
 	formattedVS 
@@ -94,10 +96,10 @@ ShaderBase::ShaderBase(Vector4 color, Vector4 posOffset)
 		<< "																									\n"
 		<< "void main()																							\n"
 		<< "{																									\n"
-		<< "  gl_Position = vec4(pos.x * " << PositionOffset.X << "," 
-							 << "pos.y * " << PositionOffset.Y << "," 
-							 << "pos.z * " << PositionOffset.Z << "," 
-							 << "1.0 * " << PositionOffset.W	  << ");" << "									\n"
+		<< "  gl_Position = vec4(pos.x + " << PositionOffset.X << "," 
+							 << "pos.y + " << PositionOffset.Y << "," 
+							 << "pos.z + " << PositionOffset.Z << "," 
+							 << "1.0 + " << PositionOffset.W	  << ");" << "									\n"
 		<< 
 	"}";
 

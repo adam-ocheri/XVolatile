@@ -9,6 +9,7 @@
 #include "WindowManager.h"
 #include "ShaderManager.h"
 #include "ShaderBase.h"
+#include "Renderer.h"
 
 
 int main()
@@ -16,20 +17,7 @@ int main()
     WindowManager* MainWindow = new WindowManager();
     if (!MainWindow) return 1;
 
-    ShaderManager* Renderer = new ShaderManager();
-    if (!Renderer) return 1;
-
-    ShaderBase* Shader = new ShaderBase(Vector4(1.0f, 1.0f, 0.0f, 1.0f), Vector4(0.3f, 0.3f, 0.3f, 1.0f));
-    //ShaderBase* Shader = new ShaderBase();
-    if (!Shader) return 1;
-
-    //Renderer->GatherResources(Shader->ShaderProgram, Shader->VertexShader.c_str(), Shader->PixelShader.c_str());
-    Renderer->GatherResources(Shader);
-
-    Renderer->CreateTriangle();
-
-    Renderer->CompileShaders();
-    
+    Renderer* RendererV1 = new Renderer();
 
     // Main Loop - Looping as long as the window is open
     while (MainWindow->GetIsWindowOpen())
@@ -41,7 +29,8 @@ int main()
         glClearColor(0.0f, 0.0f, 1.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
 
-        Renderer->Render();
+        //Renderer->Render();
+        RendererV1->Render();
 
         // Replace the previous frame's scene and render the updated scene | RENDER CYCLE END
         glfwSwapBuffers(MainWindow->GetWindow());

@@ -1,2 +1,4 @@
-﻿  XVolatile.cpp
+﻿  ResourceManager.cpp
+C:\Projects\VisualStudioPrograms\Graphics\OpenGL\Source\1-Transformations\ResourceManager.cpp(60,10): warning C4477: 'printf' : format string '%d' requires an argument of type 'int', but variadic argument 1 has type 'size_t'
+C:\Projects\VisualStudioPrograms\Graphics\OpenGL\Source\1-Transformations\ResourceManager.cpp(60,10): message : consider using '%zd' in the format string
   XVolatile.vcxproj -> C:\Projects\VisualStudioPrograms\Graphics\OpenGL\Source\1-Transformations\x64\Debug\XVolatile.exe
